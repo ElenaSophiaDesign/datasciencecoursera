@@ -1,0 +1,128 @@
+---
+title: "Gamma Distribution"
+author: "Elena Sophia"
+date: "January 22, 2017"
+output: slidy_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+
+suppressMessages(library(shiny))
+suppressMessages(library(ggplot2))
+suppressMessages(library(dplyr))
+rm(list = ls())
+```
+##
+
+Gamma distribution is a two-parameter family of continuous probability distributions. The common exponential distribution and chi-squared distribution are special cases of the gamma distribution.
+
+Parameters:   
+
+- $k$ > 0   shape
+- $theta$ > 0   scale
+
+PDF:                ${\frac {1}{\Gamma (k)\theta ^{k}}}x^{k\,-\,1}e^{-{\frac {x}{\theta }}}$
+
+
+
+Mean:             $\scriptstyle \mathbf {E} [X]=k\theta$
+
+Variance:         $\scriptstyle\operatorname{Var}[ X] = k\theta^2$
+
+
+
+
+Source: Wikipedia
+
+##  Gamma Distribution Applications
+
+- model errors in multi-level Poisson regression models, because the combination of the Poisson distribution and a gamma distribution is a negative binomial distribution.
+
+ - model the multi-path fading of signal power in wireless communication
+
+- describe the distribution of inter-spike intervals in neuroscience
+
+- model aggregate insurance claims and the amount of rainfall accumulated in a reservoir
+
+- in bacterial gene expression, the copy number of a constitutively expressed protein often follows the gamma distribution.
+
+- in genomics, the gamma distribution was applied in peak calling step in ChIP-chip and ChIP-seq data analysis.
+
+
+
+Source: Wikipedia
+
+
+## 
+
+```{r, echo = FALSE}
+
+  noobs <- c(500)
+  Gshape <- c(2)
+  Gscale <- c(1)
+
+  # generate sample of random gamma variables
+
+  Gdata <- data.frame(rgamma(noobs,
+                             shape = Gshape,
+                             scale = Gscale))
+  names(Gdata) <- c("Gdata")
+  
+ #   sample statistics
+ samplestats <- Gdata %>%
+    summarize(samplemean = round(mean(Gdata), 2),
+               samplestdev = round(sd(Gdata), 2),
+               samplevar = round(var(Gdata), 2),
+               expmean = Gshape * Gscale,
+               expstddev = round(sqrt(Gshape * Gscale ^ 2), 2),
+               expvar = Gshape * Gscale ^ 2)
+
+   Gmode <- ifelse(Gshape >= 1, (Gshape - 1) * Gscale, Gshape * Gscale)
+   Gtop <- dgamma(Gmode, shape = Gshape, scale = Gscale)
+
+   #   Create exponential plot
+   gcolors <- c("Gamma Distribution Probability Density" = "red",
+                "Gamma Distribution Mean" = "blue",
+                "Sample Probability Density" = "black",
+                "Sample Mean" = "green")
+
+   ggplot (Gdata, aes ( x = Gdata)) +
+     geom_histogram(aes (y = ..density..), fill = "grey", binwidth = .1,
+                    show.legend = FALSE) +
+     geom_density(aes(color = "Sample Probability Density"),
+                  size = 1, show.legend = FALSE) +
+     stat_function(fun = dgamma, args = list(shape = Gshape, scale = Gscale),
+                   aes(color = "Gamma Distribution Probability Density"),
+                   show.legend=TRUE, size = 1) +
+     geom_segment(aes(x = Gshape * Gscale, xend = Gshape * Gscale,
+                      y = 0, yend = Gtop,
+                      color="Gamma Distribution Mean"),
+                  show.legend = FALSE, size=1, alpha = .5) +
+     geom_segment(aes(x = samplemean, xend = samplemean, y = 0, yend = Gtop,
+                      color="Sample Mean"), data = samplestats,
+                  show.legend = FALSE, size = 2, linetype = 2, alpha = .8) +
+     scale_fill_manual(name = "", values = gcolors) +
+     scale_colour_manual(name="",values=gcolors) +
+     theme_bw() + geom_rug() +
+     labs (title = substitute(paste("Gamma Distribution Simulation with k = ",
+                                    k, ", ", theta, " = ", t),
+                              list(k = Gshape, t = Gscale)), x = "x", size = 25) +
+     scale_x_continuous(expand = c(0, 0), breaks = seq(0, 35, 5)) +
+     theme(plot.title = element_text(lineheight=1, face="bold", vjust = 1, size = 18),
+           axis.title = element_text(face="bold", size=15),
+           axis.text = element_text(face="bold", size = 12),
+           legend.position = c(.75, .85))
+
+
+  
+  
+  
+```
+
+## 
+
+The plot on the previous slide shows theoretical gamma distribution
+with shape $k$ = 2 and scale $\theta$ = 1 and corresponding  $\mu$ = `r samplestats$expmean` and $\sigma$ = `r samplestats$expstddev`.
+For 500 iid random gamma variables sample distribution mean $\bar{X}$ = `r samplestats$samplemean` and standard error S = `r samplestats$samplestdev` are close to the underlying population parameters.  The sample density (black line on the plot) follows that of the gamma distribution (shown in red); theoretical and sample means are shown as blue and dashed green line.
+
